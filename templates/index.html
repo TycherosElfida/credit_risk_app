@@ -1,21 +1,89 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Expert System</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/style.css') }}"
-    />
-  </head>
-  <body>
-    <h1>Expert System Input</h1>
-    <form action="/diagnose" method="post">
-      <label for="user_input">Enter your symptoms:</label><br />
-      <textarea id="user_input" name="user_input" rows="4" cols="50"></textarea
-      ><br /><br />
-      <input type="submit" value="Get Diagnosis" />
-    </form>
-  </body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Formulir Aplikasi{% endblock %}
+
+{% block content %}
+<form action="{{ url_for('evaluate') }}" method="POST" class="evaluation-form">
+    
+    <div class="form-section">
+        <h2>Informasi Demografi</h2>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="age">Umur</label>
+                <input type="number" id="age" name="age" min="18" max="99" value="30" required>
+            </div>
+            <div class="form-group">
+                <label for="marital">Status Nikah</label>
+                <select id="marital" name="marital" required>
+                    <option>Lajang</option>
+                    <option selected>Menikah</option>
+                    <option>Cerai/Duda/Janda</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h2>Informasi Pekerjaan & Pendapatan</h2>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="emp_status">Status Kerja</label>
+                <select id="emp_status" name="emp_status" required>
+                    <option selected>Tetap</option>
+                    <option>Kontrak</option>
+                    <option>Wiraswasta</option>
+                    <option>Tidak Tetap</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="emp_tenure">Durasi Kerja (di tempat saat ini)</label>
+                <select id="emp_tenure" name="emp_tenure" required>
+                    <option>&lt;1 tahun</option>
+                    <option selected>1-3 tahun</option>
+                    <option>&gt;3 tahun</option>
+                </select>
+            </div>
+            <div class="form-group full-width">
+                <label for="income">Pendapatan per Bulan (Rp)</label>
+                <input type="number" id="income" name="income" step="100000" value="10000000" required>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h2>Informasi Keuangan & Pinjaman</h2>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="total_debt">Total Utang per Bulan (Rp)</label>
+                <input type="number" id="total_debt" name="total_debt" value="2500000" step="100000" required>
+            </div>
+            <div class="form-group">
+                <label for="loan_amt">Jumlah Pinjaman Diminta (Rp)</label>
+                <input type="number" id="loan_amt" name="loan_amt" value="50000000" step="1000000" required>
+            </div>
+            <div class="form-group">
+                <label for="collateral_val">Nilai Agunan (Rp)</label>
+                <input type="number" id="collateral_val" name="collateral_val" value="60000000" step="1000000" required>
+            </div>
+             <div class="form-group">
+                <label for="savings_bal">Saldo Tabungan (Rp)</label>
+                <input type="number" id="savings_bal" name="savings_bal" value="15000000" step="500000" required>
+            </div>
+            <div class="form-group">
+                <label for="credit_score">Skor Kredit</label>
+                <input type="number" id="credit_score" name="credit_score" min="300" max="850" value="700" required>
+            </div>
+            <div class="form-group">
+                <label for="late_hist">Riwayat Keterlambatan Pembayaran</label>
+                <select id="late_hist" name="late_hist" required>
+                    <option>Tidak Pernah</option>
+                    <option selected>Pernah ≤2×</option>
+                    <option>Sering</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <button type="submit" class="btn-submit">Evaluasi Risiko</button>
+</form>
+{% endblock %}

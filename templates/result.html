@@ -1,19 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Diagnosis Result</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/style.css') }}"
-    />
-  </head>
-  <body>
-    <h1>Diagnosis Result</h1>
-    <p>
-      Based on your input, the diagnosis is: <strong>{{ diagnosis }}</strong>
-    </p>
-    <a href="/">Go Back</a>
-  </body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Hasil Evaluasi{% endblock %}
+
+{% block content %}
+<div class="result-container">
+    <h2 class="result-header">Hasil Penilaian Risiko</h2>
+
+    <div class="result-summary risk-{{ risk|lower }}">
+        <h3>Kategori Risiko Final</h3>
+        <p>{{ risk.upper() }}</p>
+    </div>
+
+    <div class="decision-path">
+        <h3>Alur Keputusan (Rules Fired)</h3>
+        <ol>
+            {% for step in path %}
+                <li>{{ step }}</li>
+            {% endfor %}
+        </ol>
+    </div>
+
+    <a href="{{ url_for('index') }}" class="btn-back">Lakukan Evaluasi Lain</a>
+</div>
+{% endblock %}
