@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expert System</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+  <body>
+    <h1>Expert System Input</h1>
+    <form action="/diagnose" method="post">
+      <label for="user_input">Enter your symptoms:</label><br />
+      <textarea id="user_input" name="user_input" rows="4" cols="50"></textarea
+      ><br /><br />
+      <input type="submit" value="Get Diagnosis" />
+    </form>
+  </body>
+</html>
