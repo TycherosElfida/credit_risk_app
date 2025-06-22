@@ -1,5 +1,6 @@
 # expert_system/engine.py
-from typing import TypedDict, List, Tuple
+from typing import TypedDict, List, Tuple, Dict
+from dataclasses import dataclass, field
 
 # A TypedDict provides clarity and static analysis for your input structure.
 class LoanApplicant(TypedDict):
@@ -15,110 +16,192 @@ class LoanApplicant(TypedDict):
     credit_score: int
     late_hist: str
 
+@dataclass
+class ScorecardResult:
+    """A structured container for a single factor's score and explanation."""
+    points: int
+    reason: str
+
+@dataclass
+class CreditScorecard:
+    """A comprehensive data object to hold the entire evaluation result."""
+    final_risk_grade: str = "N/A"
+    final_score: float = 0.0
+    knockout_rule_fired: bool = False
+    decision_path: List[str] = field(default_factory=list)
+    score_breakdown: Dict = field(default_factory=dict)
+
 class CreditRiskExpertSystem:
     """
-    A class-based expert system for assessing credit risk.
-    Encapsulates all the rules and logic for a clean, reusable component.
+    A professional, scorecard-based expert system for assessing credit risk
+    in the Indonesian context. It is built upon the 5 Cs of Credit framework.
     """
-    _RISK_SCALE = ["Rendah", "Sedang", "Tinggi"]
+    # --- Weights for the 5 Cs of Credit ---
+    WEIGHTS = {
+        "character": 0.40,
+        "capacity": 0.30,
+        "capital": 0.10,
+        "collateral": 0.10,
+        "conditions": 0.10,
+    }
 
     def _safe_ratio(self, num: float, denom: float) -> float:
         """Helper for safe division to avoid ZeroDivisionError."""
-        return round(num / denom, 3) if denom else 1.0
+        if denom == 0:
+            return float('inf') # Return a large number to be handled by scoring logic
+        return round(num / denom, 4)
 
-    def _categorize_credit_score(self, score: int) -> str:
-        return "Bagus" if score >= 725 else "Sedang" if score >= 650 else "Buruk"
-
-    def _categorize_age(self, age: int) -> str:
-        return "Muda" if age < 25 else "Prima" if age <= 55 else "Senior"
-
-    def _categorize_tenure(self, tenure: str) -> str:
-        return "Pendek" if tenure == "<1 tahun" else "Sedang" if tenure == "1-3 tahun" else "Lama"
-
-    def _evaluate_base_risk(self, inp: LoanApplicant) -> Tuple[str, List[str]]:
-        """The core decision tree for initial risk assessment."""
-        path = []
-        dti = self._safe_ratio(inp['total_debt'], inp['income'])
-        lti = self._safe_ratio(inp['loan_amt'], inp['income'])
-        cltv = self._safe_ratio(inp['loan_amt'], inp['collateral_val'])
-        sav = self._safe_ratio(inp['savings_bal'], inp['loan_amt'])
-        score_cat = self._categorize_credit_score(inp['credit_score'])
-        late_hist = inp['late_hist']
-
+    # --- CHARACTER SCORING (Weight: 40%) ---
+    def _score_credit_history(self, late_hist: str) -> ScorecardResult:
+        """Scores based on payment history (SLIK Kol proxy). This is a knockout rule."""
         if late_hist == "Sering":
-            path.append("Riwayat telat 'Sering' → Risiko Tinggi")
-            return "Tinggi", path
-        path.append(f"Riwayat Telat: {late_hist}")
+            return ScorecardResult(0, "Riwayat pembayaran 'Sering' (proksi Kol 3+) adalah aturan penolakan otomatis.")
+        elif late_hist == "Pernah ≤2×":
+            return ScorecardResult(70, "Riwayat pembayaran 'Pernah ≤2×' (proksi Kol 2) menunjukkan risiko sedang.")
+        # 'Tidak Pernah' (Kol 1)
+        return ScorecardResult(100, "Riwayat pembayaran 'Tidak Pernah' (proksi Kol 1) adalah ideal.")
 
-        if late_hist == "Tidak Pernah":
-            path.append(f"Skor Kredit: {score_cat} ({inp['credit_score']})")
-            if score_cat == "Bagus":
-                return ("Sedang", path + [f"LTI {lti:.2f} > 0.8 → Risiko Sedang"]) if lti > 0.8 \
-                    else ("Rendah", path + [f"LTI {lti:.2f} ≤ 0.8 → Risiko Rendah"])
-            elif score_cat == "Sedang":
-                if dti > 0.5:
-                    return "Tinggi", path + [f"DTI {dti:.2f} > 0.5 → Risiko Tinggi"]
-                path.append(f"DTI {dti:.2f} ≤ 0.5")
-                return ("Rendah", path + ["Status Pekerjaan 'Tetap' → Risiko Rendah"]) if inp['emp_status'] == "Tetap" \
-                    else ("Sedang", path + ["Status Pekerjaan Bukan 'Tetap' → Risiko Sedang"])
-            else:  # score_cat == "Buruk"
-                if dti > 0.5:
-                    return "Tinggi", path + [f"DTI {dti:.2f} > 0.5 → Risiko Tinggi"]
-                return ("Sedang", path + ["Status Pekerjaan 'Tetap' → Risiko Sedang"]) if inp['emp_status'] == "Tetap" \
-                    else ("Tinggi", path + ["Status Pekerjaan Bukan 'Tetap' → Risiko Tinggi"])
+    def _score_credit_score(self, score: int) -> ScorecardResult:
+        """Scores the numerical credit score (e.g., from a private bureau)."""
+        if score >= 780:
+            return ScorecardResult(100, f"Skor kredit {score} (>=780) tergolong Sangat Baik.")
+        if score >= 720:
+            return ScorecardResult(80, f"Skor kredit {score} (720-779) tergolong Baik.")
+        if score >= 660:
+            return ScorecardResult(60, f"Skor kredit {score} (660-719) tergolong Cukup.")
+        return ScorecardResult(40, f"Skor kredit {score} (<660) tergolong Kurang.")
+
+    # --- CAPACITY SCORING (Weight: 30%) ---
+    def _score_dti(self, dti: float) -> ScorecardResult:
+        """Scores the Debt-to-Income ratio based on Indonesian benchmarks."""
+        dti_pct = dti * 100
+        if dti <= 0.35:
+            return ScorecardResult(100, f"Rasio Utang terhadap Pendapatan (DTI) {dti_pct:.1f}% (<=35%) adalah Ideal.")
+        if dti <= 0.49:
+            return ScorecardResult(50, f"Rasio Utang terhadap Pendapatan (DTI) {dti_pct:.1f}% (36%-49%) menunjukkan tekanan finansial.")
+        return ScorecardResult(0, f"Rasio Utang terhadap Pendapatan (DTI) {dti_pct:.1f}% (>=50%) adalah berisiko tinggi.")
+
+    def _score_employment(self, status: str, tenure: str) -> ScorecardResult:
+        """Scores employment stability based on status and tenure."""
+        if status == "Tetap":
+            if tenure == ">3 tahun":
+                return ScorecardResult(100, "Status kerja 'Tetap' dengan durasi '>3 tahun' menunjukkan stabilitas tertinggi.")
+            if tenure == "1-3 tahun":
+                return ScorecardResult(80, "Status kerja 'Tetap' dengan durasi '1-3 tahun' menunjukkan stabilitas baik.")
+        elif status in ["Wiraswasta", "Kontrak"]:
+            return ScorecardResult(50, f"Status kerja '{status}' memiliki stabilitas pendapatan yang lebih rendah.")
         
-        # late_hist == "Pernah ≤2×"
-        path.append(f"Skor Kredit: {score_cat} ({inp['credit_score']})")
-        if dti > 0.5:
-            path.append(f"DTI {dti:.2f} > 0.5")
-            return ("Tinggi", path + [f"Rasio Tabungan {sav:.2f} < 0.2 → Risiko Tinggi"]) if sav < 0.2 \
-                else ("Sedang", path + [f"Rasio Tabungan {sav:.2f} ≥ 0.2 → Risiko Sedang"])
-        else:
-            path.append(f"DTI {dti:.2f} ≤ 0.5")
-            return ("Sedang", path + [f"CLTV {cltv:.2f} > 0.9 → Risiko Sedang"]) if cltv > 0.9 \
-                else ("Rendah", path + [f"CLTV {cltv:.2f} ≤ 0.9 → Risiko Rendah"])
+        # Covers Tetap <1 tahun and Tidak Tetap
+        return ScorecardResult(20, f"Status kerja '{status}' dengan durasi '{tenure}' menunjukkan stabilitas terendah.")
 
-    def _apply_adjustments(self, base_risk: str, inp: LoanApplicant) -> Tuple[str, List[str]]:
-        """Applies adjustments based on demographic and employment factors."""
-        try:
-            risk_index = self._RISK_SCALE.index(base_risk)
-        except ValueError:
-            return base_risk, ["Error: Base risk level unknown."]
+    # --- CAPITAL SCORING (Weight: 10%) ---
+    def _score_stl(self, stl: float) -> ScorecardResult:
+        """Scores the Savings-to-Loan ratio."""
+        stl_pct = stl * 100
+        if stl >= 0.50:
+            return ScorecardResult(100, f"Rasio Tabungan terhadap Pinjaman (STL) {stl_pct:.1f}% (>=50%) menunjukkan cadangan modal sangat baik.")
+        if stl >= 0.20:
+            return ScorecardResult(70, f"Rasio Tabungan terhadap Pinjaman (STL) {stl_pct:.1f}% (20%-49%) menunjukkan cadangan modal baik.")
+        if stl >= 0.10:
+            return ScorecardResult(40, f"Rasio Tabungan terhadap Pinjaman (STL) {stl_pct:.1f}% (10%-19%) menunjukkan cadangan modal sedang.")
+        return ScorecardResult(0, f"Rasio Tabungan terhadap Pinjaman (STL) {stl_pct:.1f}% (<10%) menunjukkan cadangan modal minimal.")
 
-        notes = []
+    # --- COLLATERAL SCORING (Weight: 10%) ---
+    def _score_ltv(self, ltv: float) -> ScorecardResult:
+        """Scores the Loan-to-Value ratio."""
+        ltv_pct = ltv * 100
+        if ltv_pct == float('inf'):
+            return ScorecardResult(0, "Nilai agunan nol membuat LTV tidak terdefinisi (risiko sangat tinggi).")
+        if ltv <= 0.70:
+            return ScorecardResult(100, f"Rasio Pinjaman terhadap Nilai Agunan (LTV) {ltv_pct:.1f}% (<=70%) berisiko sangat rendah.")
+        if ltv <= 0.85:
+            return ScorecardResult(70, f"Rasio Pinjaman terhadap Nilai Agunan (LTV) {ltv_pct:.1f}% (71%-85%) berisiko rendah.")
+        if ltv <= 0.95:
+            return ScorecardResult(40, f"Rasio Pinjaman terhadap Nilai Agunan (LTV) {ltv_pct:.1f}% (86%-95%) berisiko sedang.")
+        return ScorecardResult(0, f"Rasio Pinjaman terhadap Nilai Agunan (LTV) {ltv_pct:.1f}% (>95%) berisiko tinggi.")
 
-        # Age adjustment
-        age_cat = self._categorize_age(inp['age'])
-        if age_cat in ("Muda", "Senior"):
-            risk_index = min(risk_index + 1, len(self._RISK_SCALE) - 1)
-            notes.append(f"[PENYESUAIAN] Umur '{age_cat}' menaikkan level risiko.")
+    # --- CONDITIONS SCORING (Weight: 10%) ---
+    def _score_age(self, age: int) -> ScorecardResult:
+        """Scores applicant's age."""
+        if 25 <= age <= 55:
+            return ScorecardResult(100, f"Umur {age} (25-55) berada dalam rentang usia produktif utama.")
+        return ScorecardResult(50, f"Umur {age} berada di luar rentang usia produktif utama.")
 
-        # Marital status adjustment
-        if inp['marital'] == "Menikah":
-            risk_index = max(risk_index - 1, 0)
-            notes.append(f"[PENYESUAIAN] Status 'Menikah' menurunkan level risiko.")
+    def _score_marital_status(self, marital: str) -> ScorecardResult:
+        """Scores marital status."""
+        if marital == "Menikah":
+            return ScorecardResult(100, "Status 'Menikah' seringkali berkorelasi dengan stabilitas finansial rumah tangga.")
+        return ScorecardResult(60, f"Status '{marital}' dapat mengindikasikan ketergantungan pada satu sumber pendapatan.")
 
-        # Employment tenure adjustment
-        tenure_cat = self._categorize_tenure(inp['emp_tenure'])
-        if tenure_cat == "Pendek":
-            risk_index = min(risk_index + 1, len(self._RISK_SCALE) - 1)
-            notes.append(f"[PENYESUAIAN] Durasi kerja '{tenure_cat}' menaikkan level risiko.")
-        elif tenure_cat == "Lama" and risk_index > 0:
-            risk_index -= 1
-            notes.append(f"[PENYESUAIAN] Durasi kerja 'Lama' menurunkan level risiko.")
+    def _get_risk_grade(self, score: float) -> str:
+        """Assigns final risk grade based on the total score."""
+        if score >= 80:
+            return "Rendah"
+        if score >= 60:
+            return "Sedang"
+        return "Tinggi"
 
-        return self._RISK_SCALE[risk_index], notes
-
-    def evaluate(self, applicant_data: LoanApplicant) -> Tuple[str, List[str]]:
+    def evaluate(self, applicant: LoanApplicant) -> CreditScorecard:
         """
-        The main public method to evaluate a loan applicant.
-        It runs the base tree and applies adjustments.
+        The main public method to evaluate a loan applicant using the scorecard model.
         """
-        base_risk, decision_path = self._evaluate_base_risk(applicant_data)
-        final_risk, adjustment_notes = self._apply_adjustments(base_risk, applicant_data)
+        card = CreditScorecard()
         
-        if final_risk != base_risk:
-            decision_path.append(f"Risiko awal '{base_risk}' disesuaikan menjadi '{final_risk}'.")
+        # --- 1. KNOCKOUT RULE CHECK (from Character) ---
+        history_score = self._score_credit_history(applicant['late_hist'])
+        card.score_breakdown = history_score
         
-        decision_path.extend(adjustment_notes)
-        return final_risk, decision_path
+        if applicant['late_hist'] == "Sering":
+            card.knockout_rule_fired = True
+            card.final_risk_grade = "Tinggi"
+            card.decision_path.append(history_score.reason)
+            return card
+
+        # --- 2. CALCULATE DERIVED METRICS ---
+        dti = self._safe_ratio(applicant['total_debt'], applicant['income'])
+        ltv = self._safe_ratio(applicant['loan_amt'], applicant['collateral_val'])
+        stl = self._safe_ratio(applicant['savings_bal'], applicant['loan_amt'])
+
+        # --- 3. SCORE ALL FACTORS ---
+        # Character
+        card.score_breakdown = self._score_credit_score(applicant['credit_score'])
+        
+        # Capacity
+        card.score_breakdown = self._score_dti(dti)
+        card.score_breakdown = self._score_employment(applicant['emp_status'], applicant['emp_tenure'])
+        
+        # Capital
+        card.score_breakdown = self._score_stl(stl)
+        
+        # Collateral
+        card.score_breakdown = self._score_ltv(ltv)
+        
+        # Conditions
+        card.score_breakdown['Usia'] = self._score_age(applicant['age'])
+        card.score_breakdown = self._score_marital_status(applicant['marital'])
+
+        # --- 4. CALCULATE COMPOSITE SCORES FOR EACH 'C' ---
+        char_score = (history_score.points + card.score_breakdown.points) / 2
+        cap_score = (card.score_breakdown.points + card.score_breakdown.points) / 2
+        capl_score = card.score_breakdown.points
+        coll_score = card.score_breakdown.points
+        cond_score = (card.score_breakdown['Usia'].points + card.score_breakdown.points) / 2
+
+        # --- 5. CALCULATE FINAL WEIGHTED SCORE ---
+        final_score = (
+            char_score * self.WEIGHTS["character"] +
+            cap_score * self.WEIGHTS["capacity"] +
+            capl_score * self.WEIGHTS["capital"] +
+            coll_score * self.WEIGHTS["collateral"] +
+            cond_score * self.WEIGHTS["conditions"]
+        )
+        card.final_score = round(final_score, 2)
+        
+        # --- 6. DETERMINE FINAL RISK GRADE ---
+        card.final_risk_grade = self._get_risk_grade(card.final_score)
+        
+        # --- 7. POPULATE DECISION PATH FOR EXPLAINABILITY ---
+        for factor, result in card.score_breakdown.items():
+            card.decision_path.append(f"{factor}: {result.reason} [Poin: {result.points}]")
+            
+        return card

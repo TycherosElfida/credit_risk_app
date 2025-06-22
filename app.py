@@ -1,10 +1,9 @@
 # app.py
 from flask import Flask, render_template, request, flash
-from expert_system.engine import CreditRiskExpertSystem, LoanApplicant
+from expert_system.engine import CreditRiskExpertSystem, LoanApplicant, CreditScorecard
 
 app = Flask(__name__)
-# A secret key is required for flashing messages
-app.secret_key = 'your_super_secret_key' # Change this to a random string
+app.secret_key = 'RahaSiaTsaoNiMa'
 
 @app.route('/', methods=['GET'])
 def index():
@@ -35,10 +34,10 @@ def evaluate():
 
         # 2. Instantiate the expert system and run the evaluation
         expert_system = CreditRiskExpertSystem()
-        risk, path = expert_system.evaluate(form_data)
+        scorecard: CreditScorecard = expert_system.evaluate(form_data)
 
         # 3. Render the result page with the output
-        return render_template('result.html', risk=risk, path=path, applicant_data=form_data)
+        return render_template('result.html', scorecard=scorecard, applicant_data=form_data)
 
     except (ValueError, KeyError) as e:
         # Handle cases where form data is missing or has the wrong type
