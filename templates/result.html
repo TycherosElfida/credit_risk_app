@@ -1,25 +1,68 @@
-{% extends "base.html" %}
-
-{% block title %}Hasil Evaluasi{% endblock %}
-
+{% extends "base.html" %} {% block title %}Hasil Evaluasi Kredit{% endblock %}
 {% block content %}
-<div class="result-container">
-    <h2 class="result-header">Hasil Penilaian Risiko</h2>
-
-    <div class="result-summary risk-{{ risk|lower }}">
-        <h3>Kategori Risiko Final</h3>
-        <p>{{ risk.upper() }}</p>
+<main class="bg-white p-8 md:p-12 rounded-2xl shadow-xl w-full max-w-2xl">
+    <div class="text-center mb-8">
+        <h1
+            class="text-3xl md:text-4xl font-bold text-slate-900"
+            style="font-family: 'Poppins', sans-serif"
+        >
+            Laporan Hasil Evaluasi
+        </h1>
+        <p class="text-slate-500 mt-2 text-base">
+            Berikut adalah hasil analisis risiko berdasarkan data yang
+            diberikan.
+        </p>
     </div>
 
-    <div class="decision-path">
-        <h3>Alur Keputusan (Rules Fired)</h3>
-        <ol>
-            {% for step in path %}
+    <div
+        class="rounded-lg p-6 {% if result.risk_level == 'Risiko Rendah' %} bg-green-50 border border-green-200 {% elif result.risk_level == 'Risiko Sedang' %} bg-yellow-50 border border-yellow-200 {% else %} bg-red-50 border border-red-200 {% endif %}"
+    >
+        <div class="text-center">
+            <p
+                class="text-sm font-medium {% if result.risk_level == 'Risiko Rendah' %} text-green-600 {% elif result.risk_level == 'Risiko Sedang' %} text-yellow-600 {% else %} text-red-600 {% endif %}"
+            >
+                Tingkat Risiko
+            </p>
+
+            <p
+                class="text-4xl font-bold mt-2 {% if result.risk_level == 'Risiko Rendah' %} text-green-800 {% elif result.risk_level == 'Risiko Sedang' %} text-yellow-800 {% else %} text-red-800 {% endif %}"
+                style="font-family: 'Poppins', sans-serif"
+            >
+                {{ result.risk_level }}
+            </p>
+
+            <p class="text-lg text-slate-600 mt-2">
+                Skor Akhir:
+                <span class="font-bold">{{ result.score|round|int }}</span>
+            </p>
+        </div>
+    </div>
+
+    <div class="mt-8">
+        <h2
+            class="text-lg font-semibold text-slate-800"
+            style="font-family: 'Poppins', sans-serif"
+        >
+            Jalur Pengambilan Keputusan:
+        </h2>
+        <div
+            class="bg-slate-50 border border-slate-200 rounded-lg p-4 mt-3 text-sm text-slate-700"
+        >
+            <ol class="list-decimal list-inside space-y-2">
+                {% for step in result.decision_path %}
                 <li>{{ step }}</li>
-            {% endfor %}
-        </ol>
+                {% endfor %}
+            </ol>
+        </div>
     </div>
 
-    <a href="{{ url_for('index') }}" class="btn-back">Lakukan Evaluasi Lain</a>
-</div>
+    <div class="mt-10 text-center">
+        <a
+            href="{{ url_for('index') }}"
+            class="w-full md:w-auto bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-10 rounded-lg shadow-lg focus:outline-none focus:ring-4 focus:ring-slate-300 transform transition-transform duration-150 ease-in-out hover:scale-105"
+        >
+            Kembali ke Formulir
+        </a>
+    </div>
+</main>
 {% endblock %}

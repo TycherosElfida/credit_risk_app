@@ -1,89 +1,281 @@
-{% extends "base.html" %}
-
-{% block title %}Formulir Aplikasi{% endblock %}
-
-{% block content %}
-<form action="{{ url_for('evaluate') }}" method="POST" class="evaluation-form">
-    
-    <div class="form-section">
-        <h2>Informasi Demografi</h2>
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="age">Umur</label>
-                <input type="number" id="age" name="age" min="18" max="99" value="30" required>
-            </div>
-            <div class="form-group">
-                <label for="marital">Status Nikah</label>
-                <select id="marital" name="marital" required>
-                    <option>Lajang</option>
-                    <option selected>Menikah</option>
-                    <option>Cerai/Duda/Janda</option>
-                </select>
-            </div>
-        </div>
+{% extends "base.html" %} {% block title %}Formulir Aplikasi Kredit{% endblock
+%} {% block content %}
+<main class="bg-white p-8 md:p-12 rounded-2xl shadow-xl w-full max-w-4xl">
+    <div class="text-center mb-10">
+        <h1
+            class="text-3xl md:text-4xl font-bold text-slate-900"
+            style="font-family: 'Poppins', sans-serif"
+        >
+            Formulir Evaluasi Risiko Kredit
+        </h1>
+        <p class="text-slate-500 mt-2 text-base">
+            Silakan isi data di bawah ini dengan lengkap dan benar.
+        </p>
     </div>
 
-    <div class="form-section">
-        <h2>Informasi Pekerjaan & Pendapatan</h2>
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="emp_status">Status Kerja</label>
-                <select id="emp_status" name="emp_status" required>
-                    <option selected>Tetap</option>
-                    <option>Kontrak</option>
-                    <option>Wiraswasta</option>
-                    <option>Tidak Tetap</option>
-                </select>
+    <form action="{{ url_for('evaluate') }}" method="post">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+            <div class="md:col-span-2">
+                <h2
+                    class="text-lg font-semibold text-slate-800 border-b pb-2 mb-4"
+                    style="font-family: 'Poppins', sans-serif"
+                >
+                    1. Informasi Pribadi & Karakter
+                </h2>
             </div>
-            <div class="form-group">
-                <label for="emp_tenure">Durasi Kerja (di tempat saat ini)</label>
-                <select id="emp_tenure" name="emp_tenure" required>
-                    <option>&lt;1 tahun</option>
-                    <option selected>1-3 tahun</option>
-                    <option>&gt;3 tahun</option>
-                </select>
-            </div>
-            <div class="form-group full-width">
-                <label for="income">Pendapatan per Bulan (Rp)</label>
-                <input type="number" id="income" name="income" step="100000" value="10000000" required>
-            </div>
-        </div>
-    </div>
 
-    <div class="form-section">
-        <h2>Informasi Keuangan & Pinjaman</h2>
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="total_debt">Total Utang per Bulan (Rp)</label>
-                <input type="number" id="total_debt" name="total_debt" value="2500000" step="100000" required>
-            </div>
-            <div class="form-group">
-                <label for="loan_amt">Jumlah Pinjaman Diminta (Rp)</label>
-                <input type="number" id="loan_amt" name="loan_amt" value="50000000" step="1000000" required>
-            </div>
-            <div class="form-group">
-                <label for="collateral_val">Nilai Agunan (Rp)</label>
-                <input type="number" id="collateral_val" name="collateral_val" value="60000000" step="1000000" required>
-            </div>
-             <div class="form-group">
-                <label for="savings_bal">Saldo Tabungan (Rp)</label>
-                <input type="number" id="savings_bal" name="savings_bal" value="15000000" step="500000" required>
-            </div>
-            <div class="form-group">
-                <label for="credit_score">Skor Kredit</label>
-                <input type="number" id="credit_score" name="credit_score" min="300" max="850" value="700" required>
-            </div>
-            <div class="form-group">
-                <label for="late_hist">Riwayat Keterlambatan Pembayaran</label>
-                <select id="late_hist" name="late_hist" required>
-                    <option>Tidak Pernah</option>
-                    <option selected>Pernah ≤2×</option>
-                    <option>Sering</option>
+            <div>
+                <label
+                    for="kolektibilitas"
+                    class="block text-sm font-medium text-teal-500 mb-1"
+                    >Skor Kolektibilitas (SLIK OJK)</label
+                >
+                <select
+                    id="kolektibilitas"
+                    name="kolektibilitas"
+                    required
+                    class="w-full bg-slate-50 border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                >
+                    <option value="1">1 (Lancar)</option>
+                    <option value="2">2 (Dalam Perhatian Khusus)</option>
+                    <option value="3">3 (Kurang Lancar)</option>
+                    <option value="4">4 (Diragukan)</option>
+                    <option value="5">5 (Macet)</option>
                 </select>
             </div>
+
+            <div>
+                <label
+                    for="age"
+                    class="block text-sm font-medium text-slate-700 mb-1"
+                    >Usia (Tahun)</label
+                >
+                <input
+                    type="number"
+                    id="age"
+                    name="age"
+                    required
+                    class="w-full bg-slate-50 border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                />
+            </div>
+
+            <div>
+                <label
+                    for="marital_status"
+                    class="block text-sm font-medium text-slate-700 mb-1"
+                    >Status Pernikahan</label
+                >
+                <select
+                    id="marital_status"
+                    name="marital_status"
+                    required
+                    class="w-full bg-slate-50 border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                >
+                    <option value="Menikah">Menikah</option>
+                    <option value="Lajang">Lajang</option>
+                    <option value="Cerai/Duda/Janda">Cerai/Duda/Janda</option>
+                </select>
+            </div>
+
+            <div>
+                <label
+                    for="number_of_dependents"
+                    class="block text-sm font-medium text-slate-700 mb-1"
+                    >Jumlah Tanggungan</label
+                >
+                <input
+                    type="number"
+                    id="number_of_dependents"
+                    name="number_of_dependents"
+                    required
+                    class="w-full bg-slate-50 border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                />
+            </div>
+
+            <div class="md:col-span-2 mt-6">
+                <h2
+                    class="text-lg font-semibold text-slate-800 border-b pb-2 mb-4"
+                    style="font-family: 'Poppins', sans-serif"
+                >
+                    2. Kapasitas Finansial & Pekerjaan
+                </h2>
+            </div>
+
+            <div>
+                <label
+                    for="monthly_income"
+                    class="block text-sm font-medium text-slate-700 mb-1"
+                    >Pendapatan Bulanan (Rp)</label
+                >
+                <input
+                    type="number"
+                    step="100000"
+                    id="monthly_income"
+                    name="monthly_income"
+                    required
+                    class="w-full bg-slate-50 border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                />
+            </div>
+
+            <div>
+                <label
+                    for="monthly_debt"
+                    class="block text-sm font-medium text-slate-700 mb-1"
+                    >Total Cicilan Bulanan (Rp)</label
+                >
+                <input
+                    type="number"
+                    step="100000"
+                    id="monthly_debt"
+                    name="monthly_debt"
+                    required
+                    class="w-full bg-slate-50 border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                />
+            </div>
+
+            <div>
+                <label
+                    for="employment_status"
+                    class="block text-sm font-medium text-slate-700 mb-1"
+                    >Status Pekerjaan</label
+                >
+                <select
+                    id="employment_status"
+                    name="employment_status"
+                    required
+                    class="w-full bg-slate-50 border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                >
+                    <option value="Pegawai Tetap">Pegawai Tetap</option>
+                    <option value="Wiraswasta">Wiraswasta</option>
+                    <option value="Pegawai Kontrak">Pegawai Kontrak</option>
+                    <option value="Pekerja Lepas/Tidak Tetap">
+                        Pekerja Lepas/Tidak Tetap
+                    </option>
+                </select>
+            </div>
+
+            <div>
+                <label
+                    for="employment_tenure"
+                    class="block text-sm font-medium text-slate-700 mb-1"
+                    >Lama Bekerja</label
+                >
+                <select
+                    id="employment_tenure"
+                    name="employment_tenure"
+                    required
+                    class="w-full bg-slate-50 border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                >
+                    <option value="< 1 tahun">< 1 tahun</option>
+                    <option value="1-3 tahun">1-3 tahun</option>
+                    <option value="3-5 tahun">3-5 tahun</option>
+                    <option value="> 5 tahun">> 5 tahun</option>
+                </select>
+            </div>
+
+            <div class="md:col-span-2 mt-6">
+                <h2
+                    class="text-lg font-semibold text-slate-800 border-b pb-2 mb-4"
+                    style="font-family: 'Poppins', sans-serif"
+                >
+                    3. Modal, Jaminan, & Kondisi Pinjaman
+                </h2>
+            </div>
+
+            <div>
+                <label
+                    for="loan_amount"
+                    class="block text-sm font-medium text-slate-700 mb-1"
+                    >Jumlah Pinjaman (Rp)</label
+                >
+                <input
+                    type="number"
+                    step="1000000"
+                    id="loan_amount"
+                    name="loan_amount"
+                    required
+                    class="w-full bg-slate-50 border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                />
+            </div>
+
+            <div>
+                <label
+                    for="loan_purpose"
+                    class="block text-sm font-medium text-slate-700 mb-1"
+                    >Tujuan Pinjaman</label
+                >
+                <select
+                    id="loan_purpose"
+                    name="loan_purpose"
+                    required
+                    class="w-full bg-slate-50 border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                >
+                    <option value="KPR (Kredit Pemilikan Rumah)">
+                        KPR (Kredit Pemilikan Rumah)
+                    </option>
+                    <option value="Modal Usaha">Modal Usaha</option>
+                    <option value="Pendidikan">Pendidikan</option>
+                    <option value="Konsumtif Lainnya">Konsumtif Lainnya</option>
+                </select>
+            </div>
+
+            <div>
+                <label
+                    for="collateral_value"
+                    class="block text-sm font-medium text-slate-700 mb-1"
+                    >Nilai Jaminan (Rp)</label
+                >
+                <input
+                    type="number"
+                    step="1000000"
+                    id="collateral_value"
+                    name="collateral_value"
+                    required
+                    class="w-full bg-slate-50 border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                />
+            </div>
+
+            <div>
+                <label
+                    for="savings_balance"
+                    class="block text-sm font-medium text-slate-700 mb-1"
+                    >Total Saldo Tabungan (Rp)</label
+                >
+                <input
+                    type="number"
+                    step="100000"
+                    id="savings_balance"
+                    name="savings_balance"
+                    required
+                    class="w-full bg-slate-50 border border-slate-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                />
+            </div>
+
+            <div class="md:col-span-2 flex items-center mt-4">
+                <input
+                    id="is_first_home_purchase"
+                    name="is_first_home_purchase"
+                    type="checkbox"
+                    value="true"
+                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label
+                    for="is_first_home_purchase"
+                    class="ml-3 block text-sm font-medium text-gray-700"
+                    >Ini adalah pembelian rumah pertama (khusus untuk pinjaman
+                    KPR)</label
+                >
+            </div>
         </div>
-    </div>
-    
-    <button type="submit" class="btn-submit">Evaluasi Risiko</button>
-</form>
+
+        <div class="mt-12 text-center">
+            <button
+                type="submit"
+                class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-lg shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-300 transform transition-transform duration-150 ease-in-out hover:scale-105"
+            >
+                Evaluasi Risiko
+            </button>
+        </div>
+    </form>
+</main>
 {% endblock %}

@@ -3,33 +3,26 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>{% block title %}Risiko Kredit{% endblock %}</title>
+
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap"
             rel="stylesheet"
         />
+
         <link
+            href="{{ url_for('static', filename='css/output.css') }}"
             rel="stylesheet"
-            href="{{ url_for('static', filename='css/style.css') }}"
         />
+
+        <title>
+            {% block title %}Sistem Pakar Evaluasi Risiko Kredit{% endblock %}
+        </title>
     </head>
-    <body>
-        <div class="container">
-            <header>
-                <h1>Penilaian Risiko Kredit</h1>
-            </header>
-            <main>
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %} {% for category, message in messages %}
-                <div class="flash {{ category }}">{{ message }}</div>
-                {% endfor %} {% endif %} {% endwith %} {% block content %}{%
-                endblock %}
-            </main>
-            <footer>
-                <p>&copy; 2025 - Credit Risk Management</p>
-            </footer>
+    <body class="bg-slate-50 text-slate-800 antialiased">
+        <div class="min-h-screen flex flex-col items-center justify-center p-4">
+            {% block content %}{% endblock %}
         </div>
     </body>
 </html>
